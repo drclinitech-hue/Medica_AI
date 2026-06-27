@@ -15,7 +15,7 @@ if %errorlevel% neq 0 (
 :: Check Python
 where python >nul 2>nul
 if %errorlevel% neq 0 (
-    echo [ERROR] Python is not installed. Please install Python (and add it to PATH) and try again.
+    echo [ERROR] Python is not installed. Please install Python and add it to PATH, then try again.
     pause
     exit /b 1
 )
@@ -37,7 +37,7 @@ echo.
 echo [3/3] Setting up ML Model (Python Environment)...
 cd ml-model
 if not exist "venv\" (
-    echo Creating Python virtual environment (venv)...
+    echo Creating Python virtual environment venv...
     python -m venv venv
 )
 echo Activating virtual environment and installing requirements...
