@@ -90,14 +90,20 @@ def generate_dataset(num_samples=2000):
         if disease in disease_symptom_mapping:
             core_symptoms = disease_symptom_mapping[disease]
             for sym in core_symptoms:
-                if random.random() > 0.15: # 85% chance to have the core symptom
+                if random.random() > 0.05: # 95% chance to have the core symptom
                     row_symptoms[sym] = 1
                     
         # Add some random noise (false positives)
         for sym in symptoms:
-            if row_symptoms[sym] == 0 and random.random() < 0.05:
+            if row_symptoms[sym] == 0 and random.random() < 0.01:
                 row_symptoms[sym] = 1
                 
+        # Adjust vitals based on symptoms
+        if row_symptoms['fever'] == 1:
+            temp = round(random.uniform(100.0, 104.0), 1)
+        else:
+            temp = round(random.uniform(97.0, 99.0), 1)
+            
         # Create row
         row = {
             'age': age,
@@ -127,7 +133,7 @@ def generate_dataset(num_samples=2000):
 
 if __name__ == "__main__":
     print("Generating synthetic dataset with 40 diseases...")
-    df = generate_dataset(3000) # Generate 3000 rows
+    df = generate_dataset(15000) # Generate 15000 rows
     df.to_csv('dataset.csv', index=False)
     print(f"Dataset generated successfully with {len(df)} rows and {len(df.columns)} columns.")
     print(f"Shape: {df.shape}")
