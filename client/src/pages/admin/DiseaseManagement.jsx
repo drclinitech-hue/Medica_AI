@@ -72,6 +72,7 @@ const DiseaseManagement = () => {
         </div>
       )
     },
+    {
       accessorKey: 'description',
       header: 'Description',
       cell: info => <span className="truncate max-w-[200px] block" title={info.getValue()}>{info.getValue()}</span>
