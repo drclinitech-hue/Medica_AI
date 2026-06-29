@@ -27,11 +27,15 @@ def make_prediction(patient_data, patient_symptoms):
     # Format gender
     gender = 1 if patient_data.get('gender') == 'Male' else 0
     
+    # Handle height conversion (if passed in feet, convert to cm)
+    raw_height = patient_data.get('height', 170)
+    height_cm = raw_height * 30.48 if raw_height < 10 else raw_height
+    
     # Create input dictionary
     input_dict = {
         'age': patient_data.get('age', 30),
         'gender': gender,
-        'height': patient_data.get('height', 170),
+        'height': height_cm,
         'weight': patient_data.get('weight', 70),
         'temp': patient_data.get('temp', 98.6),
         'bp': patient_data.get('bp', 120),
