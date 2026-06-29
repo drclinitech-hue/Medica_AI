@@ -37,6 +37,7 @@ const DoctorManagement = () => {
   };
 
   const columns = [
+    {
       accessorKey: 'userId',
       header: 'Doctor',
       cell: info => {
