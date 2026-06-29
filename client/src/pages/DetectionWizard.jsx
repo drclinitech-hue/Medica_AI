@@ -134,7 +134,7 @@ const DetectionWizard = () => {
         symptoms: extractedData.symptoms,
         duration: extractedData.duration,
         severity: extractedData.severity,
-        patientDescription: description
+        patientDescription: chatHistory.map(m => m.text).join(' | ')
       });
       setMlResults(res);
       nextPhase();
