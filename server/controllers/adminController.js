@@ -7,13 +7,53 @@ const Appointment = require('../models/Appointment');
 // @access  Private/Admin
 const getDashboardStats = async (req, res) => {
   try {
+    // Basic counts
     const totalUsers = await User.countDocuments();
     const totalPatients = await User.countDocuments({ role: 'patient' });
     const totalDoctors = await User.countDocuments({ role: 'doctor' });
-    
-    // In a real app we'd filter by today's date, but for now we return total
     const totalPredictions = await Detection.countDocuments();
     const totalAppointments = await Appointment.countDocuments();
+    
+    // Status counts for cards
+    const completedAppointments = await Appointment.countDocuments({ status: 'Completed' });
+    const pendingAppointments = await Appointment.countDocuments({ status: 'Pending' });
+
+    // 1. Top Predicted Diseases (Bar Chart)
+    const topDiseasesAggregation = await Detection.aggregate([
+      { $group: { _id: '$detectedDisease', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]);
+
+    // 2. Appointment Status (Doughnut Chart)
+    const appointmentStatusAggregation = await Appointment.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    // 3. User Growth (Line Chart)
+    // Grouping new patients by month for the current year
+    const currentYear = new Date().getFullYear();
+    const userGrowthAggregation = await User.aggregate([
+      { 
+        $match: { 
+          role: 'patient',
+          createdAt: { $gte: new Date(`${currentYear}-01-01`), $lte: new Date(`${currentYear}-12-31`) }
+        }
+      },
+      {
+        $group: {
+          _id: { $month: '$createdAt' },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { '_id': 1 } }
+    ]);
+
+    // 4. Recent Predictions Feed
+    const recentPredictions = await Detection.find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('patientId', 'name email');
 
     res.json({
       success: true,
@@ -22,7 +62,13 @@ const getDashboardStats = async (req, res) => {
         totalPatients,
         totalDoctors,
         totalPredictions,
-        totalAppointments
+        totalAppointments,
+        completedAppointments,
+        pendingAppointments,
+        topDiseases: topDiseasesAggregation,
+        appointmentStatus: appointmentStatusAggregation,
+        userGrowth: userGrowthAggregation,
+        recentPredictions
       }
     });
   } catch (error) {

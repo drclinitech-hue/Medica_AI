@@ -69,35 +69,31 @@ const AdminDashboard = () => {
     return <div className="text-red-500 bg-red-500/10 p-4 rounded-xl border border-red-500/20">Failed to load dashboard statistics.</div>;
   }
 
-  // Dummy Chart Data for UI Demonstration
+  // Helper to map month numbers to names
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  // 1. Line Chart Data (User Growth)
   const lineChartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+    labels: stats?.userGrowth?.map(item => monthNames[item._id - 1]) || ['Jan'],
     datasets: [
       {
         label: 'New Patients',
-        data: [65, 59, 80, 81, 56, 55, 90],
+        data: stats?.userGrowth?.map(item => item.count) || [0],
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        fill: true,
-        tension: 0.4,
-      },
-      {
-        label: 'Predictions Made',
-        data: [28, 48, 40, 19, 86, 27, 120],
-        borderColor: 'rgb(16, 185, 129)',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
         fill: true,
         tension: 0.4,
       }
     ]
   };
 
+  // 2. Bar Chart Data (Top Predicted Diseases)
   const barChartData = {
-    labels: ['Flu', 'Dengue', 'Covid-19', 'Malaria', 'Typhoid'],
+    labels: stats?.topDiseases?.map(item => item._id) || ['No Data'],
     datasets: [
       {
-        label: 'Top Predicted Diseases',
-        data: [120, 98, 86, 54, 43],
+        label: 'Predictions',
+        data: stats?.topDiseases?.map(item => item.count) || [0],
         backgroundColor: [
           'rgba(255, 99, 132, 0.8)',
           'rgba(54, 162, 235, 0.8)',
@@ -110,15 +106,17 @@ const AdminDashboard = () => {
     ]
   };
 
+  // 3. Doughnut Chart Data (Appointment Status)
   const doughnutData = {
-    labels: ['Completed', 'Pending', 'Cancelled'],
+    labels: stats?.appointmentStatus?.map(item => item._id) || ['No Data'],
     datasets: [
       {
-        data: [300, 50, 20],
+        data: stats?.appointmentStatus?.map(item => item.count) || [1],
         backgroundColor: [
-          'rgba(16, 185, 129, 0.8)',
-          'rgba(245, 158, 11, 0.8)',
-          'rgba(239, 68, 68, 0.8)',
+          'rgba(16, 185, 129, 0.8)', // Green for Completed
+          'rgba(245, 158, 11, 0.8)', // Yellow for Pending
+          'rgba(239, 68, 68, 0.8)',  // Red for Cancelled
+          'rgba(59, 130, 246, 0.8)', // Blue for Confirmed
         ],
         borderWidth: 0,
       }
@@ -183,14 +181,14 @@ const AdminDashboard = () => {
         />
         <StatCard 
           title="Completed Appointments" 
-          value={0} 
+          value={stats?.completedAppointments || 0} 
           icon={CheckCircle} 
           color="bg-teal-500/10 text-teal-500" 
         />
         <StatCard 
-          title="Active AI Chats" 
-          value={0} 
-          icon={BrainCircuit} 
+          title="Pending Appointments" 
+          value={stats?.pendingAppointments || 0} 
+          icon={Calendar} 
           color="bg-orange-500/10 text-orange-500" 
         />
         <StatCard 
@@ -231,10 +229,29 @@ const AdminDashboard = () => {
             <h3 className="text-lg font-bold">Recent Predictions</h3>
             <button className="text-sm font-semibold text-primary hover:underline">View All</button>
           </div>
-          <div className="flex-1 flex items-center justify-center border-2 border-dashed rounded-xl bg-muted/30">
-            <p className="text-muted-foreground font-medium flex items-center gap-2">
-              <Activity className="w-5 h-5"/> Live Prediction Feed will appear here
-            </p>
+          <div className="flex-1 border-2 border-dashed rounded-xl bg-muted/30 p-2 overflow-y-auto">
+            {stats?.recentPredictions && stats.recentPredictions.length > 0 ? (
+              <div className="space-y-3">
+                {stats.recentPredictions.map((pred, index) => (
+                  <div key={index} className="bg-background rounded-lg p-4 shadow-sm border flex justify-between items-center">
+                    <div>
+                      <p className="font-bold">{pred.patientId?.name || 'Unknown Patient'}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(pred.createdAt).toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-primary">{pred.detectedDisease}</p>
+                      <p className="text-xs font-semibold text-muted-foreground">Conf: {Math.round(pred.confidenceScore * 100)}%</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-muted-foreground font-medium flex items-center gap-2">
+                  <Activity className="w-5 h-5"/> Live Prediction Feed will appear here
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
