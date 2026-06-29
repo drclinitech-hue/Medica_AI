@@ -1,21 +1,63 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
 import { 
-  MoreHorizontal, Search, Activity, Plus
+  MoreHorizontal, Search, Activity, Plus, Trash2
 } from 'lucide-react';
-
-const MOCK_DISEASES = [
-  { id: 1, name: 'Dengue Fever', category: 'Infectious', riskLevel: 'High', symptoms: ['Fever', 'Joint Pain', 'Rash'] },
-  { id: 2, name: 'Typhoid', category: 'Bacterial', riskLevel: 'Moderate', symptoms: ['High Fever', 'Abdominal Pain', 'Weakness'] },
-  { id: 3, name: 'Covid-19', category: 'Viral', riskLevel: 'High', symptoms: ['Fever', 'Cough', 'Loss of Taste'] },
-];
+import adminService from '../../services/adminService';
+import toast from 'react-hot-toast';
 
 const DiseaseManagement = () => {
-  const [data] = useState(MOCK_DISEASES);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [formData, setFormData] = useState({ 
+    name: '', description: '', riskLevel: 'Moderate', category: 'General', symptoms: '' 
+  });
+
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ['diseases'],
+    queryFn: adminService.getDiseases
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: adminService.deleteDisease,
+    onSuccess: () => {
+      toast.success('Disease deleted successfully');
+      queryClient.invalidateQueries(['diseases']);
+    },
+    onError: (err) => toast.error('Error deleting disease: ' + (err.response?.data?.message || err.message))
+  });
+
+  const createMutation = useMutation({
+    mutationFn: adminService.createDisease,
+    onSuccess: () => {
+      toast.success('Disease added successfully');
+      setIsAddModalOpen(false);
+      setFormData({ name: '', description: '', riskLevel: 'Moderate', category: 'General', symptoms: '' });
+      queryClient.invalidateQueries(['diseases']);
+    },
+    onError: (err) => toast.error('Error adding disease: ' + (err.response?.data?.message || err.message))
+  });
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this disease?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleCreateSubmit = (e) => {
+    e.preventDefault();
+    const payload = {
+      ...formData,
+      symptoms: formData.symptoms.split(',').map(s => s.trim()).filter(Boolean)
+    };
+    createMutation.mutate(payload);
+  };
 
   const columns = [
     {
@@ -30,20 +72,9 @@ const DiseaseManagement = () => {
         </div>
       )
     },
-    {
-      accessorKey: 'category',
-      header: 'Category'
-    },
-    {
-      accessorKey: 'riskLevel',
-      header: 'Risk Level',
-      cell: info => {
-        const risk = info.getValue();
-        let color = 'bg-gray-500/10 text-gray-500';
-        if (risk === 'High') color = 'bg-red-500/10 text-red-500';
-        if (risk === 'Moderate') color = 'bg-yellow-500/10 text-yellow-500';
-        return <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${color}`}>{risk}</span>;
-      }
+      accessorKey: 'description',
+      header: 'Description',
+      cell: info => <span className="truncate max-w-[200px] block" title={info.getValue()}>{info.getValue()}</span>
     },
     {
       accessorKey: 'symptoms',
@@ -58,16 +89,25 @@ const DiseaseManagement = () => {
     },
     {
       id: 'actions',
-      cell: () => (
-        <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-          <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-        </button>
+      cell: info => (
+        <div className="flex gap-2">
+          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+          </button>
+          <button 
+            onClick={() => handleDelete(info.row.original._id)}
+            className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors text-muted-foreground"
+            title="Delete Disease"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
       )
     }
   ];
 
   const table = useReactTable({
-    data,
+    data: data || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -79,7 +119,10 @@ const DiseaseManagement = () => {
           <h1 className="text-3xl font-black mb-1">Diseases & Symptoms</h1>
           <p className="text-muted-foreground">Manage the knowledge base for the AI Prediction Model.</p>
         </div>
-        <button className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-semibold shadow-md hover:bg-primary/90 transition-all flex items-center gap-2">
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-semibold shadow-md hover:bg-primary/90 transition-all flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" /> Add Disease
         </button>
       </div>
@@ -110,19 +153,63 @@ const DiseaseManagement = () => {
               ))}
             </thead>
             <tbody>
-              {table.getRowModel().rows.map(row => (
-                <tr key={row.id} className="border-b hover:bg-muted/30 transition-colors">
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="px-6 py-4">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              {table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map(row => (
+                  <tr key={row.id} className="border-b hover:bg-muted/30 transition-colors">
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="px-6 py-4">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                !isLoading && (
+                  <tr>
+                    <td colSpan={columns.length} className="px-6 py-12 text-center text-muted-foreground">
+                      No diseases found.
                     </td>
-                  ))}
-                </tr>
-              ))}
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
         </div>
+        {isLoading && <div className="p-4 text-center text-muted-foreground">Loading...</div>}
       </div>
+
+      {/* Add Disease Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-2xl font-bold mb-4">Add New Disease</h2>
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Disease Name</label>
+                <input required type="text" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <textarea required rows="2" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Symptoms (comma separated)</label>
+                <textarea required rows="2" placeholder="Fever, Cough, Headache" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.symptoms} onChange={e => setFormData({...formData, symptoms: e.target.value})} />
+              </div>
+              
+              <div className="pt-4 flex gap-3 justify-end">
+                <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 border rounded-lg font-medium hover:bg-muted">Cancel</button>
+                <button type="submit" disabled={createMutation.isLoading} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50">
+                  {createMutation.isLoading ? 'Adding...' : 'Add Disease'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

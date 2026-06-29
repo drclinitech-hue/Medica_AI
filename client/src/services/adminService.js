@@ -31,9 +31,29 @@ const deleteUser = async (id) => {
   return response.data;
 };
 
+const updateUserRole = async (id, role) => {
+  const response = await axios.put(`${API_URL}/users/${id}`, { role }, getAuthHeaders());
+  return response.data;
+};
+
+const createUser = async (userData) => {
+  const response = await axios.post(`${API_URL}/users`, userData, getAuthHeaders());
+  return response.data;
+};
+
 const getDoctors = async () => {
   const response = await axios.get(`${API_URL}/doctors`, getAuthHeaders());
   return response.data.data;
+};
+
+const createDoctor = async (doctorData) => {
+  const response = await axios.post(`${API_URL}/doctors`, doctorData, getAuthHeaders());
+  return response.data;
+};
+
+const updateDoctorStatus = async (id, status) => {
+  const response = await axios.put(`${API_URL}/doctors/${id}`, { status }, getAuthHeaders());
+  return response.data;
 };
 
 const deleteDoctor = async (id) => {
@@ -51,12 +71,34 @@ const getAppointments = async () => {
   return response.data.data;
 };
 
+const getDiseases = async () => {
+  const response = await axios.get(`${API_URL}/diseases`, getAuthHeaders());
+  return response.data.data;
+};
+
+const createDisease = async (diseaseData) => {
+  const response = await axios.post(`${API_URL}/diseases`, diseaseData, getAuthHeaders());
+  return response.data;
+};
+
+const deleteDisease = async (id) => {
+  const response = await axios.delete(`${API_URL}/diseases/${id}`, getAuthHeaders());
+  return response.data;
+};
+
 export default {
   getDashboardStats,
   getUsers,
+  createUser,
   deleteUser,
+  updateUserRole,
   getDoctors,
+  createDoctor,
+  updateDoctorStatus,
   deleteDoctor,
   getPatients,
-  getAppointments
+  getAppointments,
+  getDiseases,
+  createDisease,
+  deleteDisease
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   flexRender,
@@ -12,8 +12,48 @@ import {
 import adminService from '../../services/adminService';
 import toast from 'react-hot-toast';
 
+const DropdownMenu = ({ isOpen, onClose, onVerify, onSuspend }) => {
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div ref={dropdownRef} className="absolute right-0 mt-2 w-32 bg-card border rounded-lg shadow-lg py-1 z-50">
+      <button 
+        onClick={() => { onVerify(); onClose(); }}
+        className="w-full text-left px-4 py-2 text-sm text-green-500 hover:bg-muted"
+      >
+        Verify
+      </button>
+      <button 
+        onClick={() => { onSuspend(); onClose(); }}
+        className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-muted"
+      >
+        Suspend
+      </button>
+    </div>
+  );
+};
+
 const DoctorManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  
+  // Form State
+  const [formData, setFormData] = useState({
+    name: '', email: '', password: '', pmdcNumber: '', specialization: '', fee: 1000, city: ''
+  });
   
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
@@ -30,10 +70,35 @@ const DoctorManagement = () => {
     onError: (err) => toast.error('Error deleting doctor: ' + (err.response?.data?.message || err.message))
   });
 
+  const createMutation = useMutation({
+    mutationFn: adminService.createDoctor,
+    onSuccess: () => {
+      toast.success('Doctor added successfully');
+      setIsAddModalOpen(false);
+      setFormData({ name: '', email: '', password: '', pmdcNumber: '', specialization: '', fee: 1000, city: '' });
+      queryClient.invalidateQueries(['doctors']);
+    },
+    onError: (err) => toast.error('Error adding doctor: ' + (err.response?.data?.message || err.message))
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }) => adminService.updateDoctorStatus(id, status),
+    onSuccess: () => {
+      toast.success('Doctor status updated');
+      queryClient.invalidateQueries(['doctors']);
+    },
+    onError: (err) => toast.error('Error updating status: ' + (err.response?.data?.message || err.message))
+  });
+
   const handleDeleteDoctor = (id) => {
     if (window.confirm('Are you sure you want to delete this doctor?')) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleCreateSubmit = (e) => {
+    e.preventDefault();
+    createMutation.mutate(formData);
   };
 
   const columns = [
@@ -92,20 +157,34 @@ const DoctorManagement = () => {
     },
     {
       id: 'actions',
-      cell: info => (
-        <div className="flex gap-2">
-          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-          </button>
-          <button 
-            onClick={() => handleDeleteDoctor(info.row.original._id)}
-            className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors text-muted-foreground"
-            title="Delete Doctor"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
-        </div>
-      )
+      cell: info => {
+        const id = info.row.original._id;
+        return (
+          <div className="flex gap-2 items-center relative">
+            <div className="relative">
+              <button 
+                onClick={() => setOpenDropdownId(openDropdownId === id ? null : id)}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <DropdownMenu 
+                isOpen={openDropdownId === id} 
+                onClose={() => setOpenDropdownId(null)}
+                onVerify={() => updateStatusMutation.mutate({ id, status: 'Verified' })}
+                onSuspend={() => updateStatusMutation.mutate({ id, status: 'Suspended' })}
+              />
+            </div>
+            <button 
+              onClick={() => handleDeleteDoctor(id)}
+              className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors text-muted-foreground"
+              title="Delete Doctor"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
+        );
+      }
     }
   ];
 
@@ -120,9 +199,12 @@ const DoctorManagement = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black mb-1">Doctor Management</h1>
-          <p className="text-muted-foreground">Approve, verify, and manage healthcare professionals.</p>
+          <p className="text-muted-foreground">Verify and manage medical professionals on Medica AI.</p>
         </div>
-        <button className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-semibold shadow-md hover:bg-primary/90 transition-all flex items-center gap-2">
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-semibold shadow-md hover:bg-primary/90 transition-all flex items-center gap-2"
+        >
           <UserPlus className="w-4 h-4" /> Add Doctor
         </button>
       </div>
@@ -185,6 +267,61 @@ const DoctorManagement = () => {
         </div>
         {isLoading && <div className="p-4 text-center text-muted-foreground">Loading...</div>}
       </div>
+
+      {/* Add Doctor Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-2xl font-bold mb-4">Add New Doctor</h2>
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Full Name</label>
+                <input required type="text" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input required type="email" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Password</label>
+                <input required type="password" minLength="6" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">PMDC Number</label>
+                <input required type="text" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.pmdcNumber} onChange={e => setFormData({...formData, pmdcNumber: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Specialization</label>
+                <input required type="text" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.specialization} onChange={e => setFormData({...formData, specialization: e.target.value})} />
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-1">Fee (PKR)</label>
+                  <input type="number" className="w-full bg-background border rounded-lg px-3 py-2" 
+                    value={formData.fee} onChange={e => setFormData({...formData, fee: e.target.value})} />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-1">City</label>
+                  <input type="text" className="w-full bg-background border rounded-lg px-3 py-2" 
+                    value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
+                </div>
+              </div>
+              
+              <div className="pt-4 flex gap-3 justify-end">
+                <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 border rounded-lg font-medium hover:bg-muted">Cancel</button>
+                <button type="submit" disabled={createMutation.isLoading} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50">
+                  {createMutation.isLoading ? 'Adding...' : 'Add Doctor'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

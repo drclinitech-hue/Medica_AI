@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Detection = require('../models/Detection');
 const Appointment = require('../models/Appointment');
 const Doctor = require('../models/Doctor');
+const Disease = require('../models/Disease');
 
 // @desc    Get dashboard statistics
 // @route   GET /api/admin/dashboard
@@ -162,6 +163,66 @@ const deleteDoctor = async (req, res) => {
   }
 };
 
+// @desc    Update Doctor Status
+// @route   PUT /api/admin/doctors/:id
+const updateDoctorStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const doctor = await Doctor.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+    res.json({ success: true, data: doctor });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Create Doctor from Admin Panel
+// @route   POST /api/admin/doctors
+const createDoctor = async (req, res) => {
+  try {
+    const { name, email, password, pmdcNumber, specialization, fee, city } = req.body;
+    
+    // Check if user exists
+    const userExists = await User.findOne({ email });
+    if (userExists) return res.status(400).json({ message: 'Email already exists' });
+
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: 'doctor'
+    });
+
+    // Create doctor profile
+    const doctor = await Doctor.create({
+      userId: user._id,
+      pmdcNumber: pmdcNumber || 'PENDING',
+      specialization: specialization || 'General',
+      fee: fee || 1000,
+      status: 'Verified',
+      hospitals: [{ name: 'Medica Hospital', city: city || 'Sahiwal' }]
+    });
+
+    res.status(201).json({ success: true, data: doctor });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update User Role
+// @route   PUT /api/admin/users/:id
+const updateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+    const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Get all patients
 // @route   GET /api/admin/patients
 const getPatients = async (req, res) => {
@@ -189,6 +250,75 @@ const getAppointments = async (req, res) => {
   }
 };
 
+// @desc    Create User
+// @route   POST /api/admin/users
+const createUser = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    
+    const userExists = await User.findOne({ email });
+    if (userExists) return res.status(400).json({ message: 'Email already exists' });
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: role || 'patient'
+    });
+
+    res.status(201).json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all diseases
+// @route   GET /api/admin/diseases
+const getDiseases = async (req, res) => {
+  try {
+    const diseases = await Disease.find().sort({ createdAt: -1 });
+    res.json({ success: true, data: diseases });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Create Disease
+// @route   POST /api/admin/diseases
+const createDisease = async (req, res) => {
+  try {
+    const { name, description, symptoms, precautions, preventionTips, suggestedMedicines } = req.body;
+    
+    const diseaseExists = await Disease.findOne({ name });
+    if (diseaseExists) return res.status(400).json({ message: 'Disease already exists' });
+
+    const disease = await Disease.create({
+      name,
+      description,
+      symptoms,
+      precautions,
+      preventionTips,
+      suggestedMedicines
+    });
+
+    res.status(201).json({ success: true, data: disease });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete Disease
+// @route   DELETE /api/admin/diseases/:id
+const deleteDisease = async (req, res) => {
+  try {
+    const disease = await Disease.findByIdAndDelete(req.params.id);
+    if (!disease) return res.status(404).json({ message: 'Disease not found' });
+    res.json({ success: true, message: 'Disease deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getUsers,
@@ -196,5 +326,12 @@ module.exports = {
   getDoctors,
   deleteDoctor,
   getPatients,
-  getAppointments
+  getAppointments,
+  createDoctor,
+  updateDoctorStatus,
+  updateUserRole,
+  createUser,
+  getDiseases,
+  createDisease,
+  deleteDisease
 };

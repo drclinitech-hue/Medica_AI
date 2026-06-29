@@ -1,23 +1,58 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useRef, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
 import { 
-  MoreHorizontal, Search, Filter,
+  MoreHorizontal, Search, Filter, Trash2, UserPlus,
   User as UserIcon
 } from 'lucide-react';
 import adminService from '../../services/adminService';
+import toast from 'react-hot-toast';
 
 const PatientManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'patient' });
 
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['patients'],
     queryFn: adminService.getPatients
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: adminService.deleteUser,
+    onSuccess: () => {
+      toast.success('Patient deleted successfully');
+      queryClient.invalidateQueries(['patients']);
+    },
+    onError: (err) => toast.error('Error deleting patient: ' + (err.response?.data?.message || err.message))
+  });
+
+  const createMutation = useMutation({
+    mutationFn: adminService.createUser,
+    onSuccess: () => {
+      toast.success('Patient created successfully');
+      setIsAddModalOpen(false);
+      setFormData({ name: '', email: '', password: '', role: 'patient' });
+      queryClient.invalidateQueries(['patients']);
+    },
+    onError: (err) => toast.error('Error creating patient: ' + (err.response?.data?.message || err.message))
+  });
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this patient?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleCreateSubmit = (e) => {
+    e.preventDefault();
+    createMutation.mutate(formData);
+  };
 
   const columns = [
     {
@@ -59,10 +94,19 @@ const PatientManagement = () => {
     },
     {
       id: 'actions',
-      cell: () => (
-        <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-          <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-        </button>
+      cell: info => (
+        <div className="flex gap-2">
+          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+          </button>
+          <button 
+            onClick={() => handleDelete(info.row.original._id)}
+            className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors text-muted-foreground"
+            title="Delete Patient"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
       )
     }
   ];
@@ -80,6 +124,12 @@ const PatientManagement = () => {
           <h1 className="text-3xl font-black mb-1">Patient Management</h1>
           <p className="text-muted-foreground">View and manage patient records and history.</p>
         </div>
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-semibold shadow-md hover:bg-primary/90 transition-all flex items-center gap-2"
+        >
+          <UserPlus className="w-4 h-4" /> Add Patient
+        </button>
       </div>
 
       <div className="bg-card border rounded-2xl shadow-sm overflow-hidden flex flex-col min-h-[500px]">
@@ -134,6 +184,39 @@ const PatientManagement = () => {
         </div>
         {isLoading && <div className="p-4 text-center text-muted-foreground">Loading...</div>}
       </div>
+
+      {/* Add Patient Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-2xl font-bold mb-4">Add New Patient</h2>
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Full Name</label>
+                <input required type="text" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input required type="email" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Password</label>
+                <input required type="password" minLength="6" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+              </div>
+              
+              <div className="pt-4 flex gap-3 justify-end">
+                <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 border rounded-lg font-medium hover:bg-muted">Cancel</button>
+                <button type="submit" disabled={createMutation.isLoading} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50">
+                  {createMutation.isLoading ? 'Creating...' : 'Create Patient'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

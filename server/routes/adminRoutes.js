@@ -7,7 +7,14 @@ const {
   getDoctors,
   deleteDoctor,
   getPatients,
-  getAppointments
+  getAppointments,
+  createDoctor,
+  updateDoctorStatus,
+  updateUserRole,
+  createUser,
+  getDiseases,
+  createDisease,
+  deleteDisease
 } = require('../controllers/adminController');
 const { protect } = require('../middlewares/authMiddleware');
 const { authorizeRoles } = require('../middlewares/adminMiddleware');
@@ -20,14 +27,23 @@ router.get('/dashboard', getDashboardStats);
 
 // Users
 router.get('/users', getUsers);
+router.post('/users', createUser);
 router.delete('/users/:id', deleteUser);
+router.put('/users/:id', updateUserRole);
 
 // Doctors
 router.get('/doctors', getDoctors);
+router.post('/doctors', createDoctor);
+router.put('/doctors/:id', updateDoctorStatus);
 router.delete('/doctors/:id', deleteDoctor);
 
 // Patients
 router.get('/patients', getPatients);
+
+// Diseases
+router.get('/diseases', getDiseases);
+router.post('/diseases', createDisease);
+router.delete('/diseases/:id', deleteDisease);
 
 // Appointments
 router.get('/appointments', getAppointments);

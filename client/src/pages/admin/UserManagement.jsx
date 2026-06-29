@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   flexRender,
@@ -12,11 +12,39 @@ import {
 import adminService from '../../services/adminService';
 import toast from 'react-hot-toast';
 
+const DropdownMenu = ({ isOpen, onClose, onChangeRole }) => {
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div ref={dropdownRef} className="absolute right-0 mt-2 w-40 bg-card border rounded-lg shadow-lg py-1 z-50">
+      <div className="px-4 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider bg-muted/20">Change Role</div>
+      <button onClick={() => { onChangeRole('patient'); onClose(); }} className="w-full text-left px-4 py-2 text-sm hover:bg-muted text-emerald-500">Make Patient</button>
+      <button onClick={() => { onChangeRole('admin'); onClose(); }} className="w-full text-left px-4 py-2 text-sm hover:bg-muted text-red-500">Make Admin</button>
+    </div>
+  );
+};
+
 const UserManagement = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [searchTerm, setSearchTerm] = useState(''); // for debounced input
+  const [searchTerm, setSearchTerm] = useState(''); 
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'admin' });
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['users', page, search, roleFilter],
@@ -92,20 +120,33 @@ const UserManagement = () => {
     },
     {
       id: 'actions',
-      cell: info => (
-        <div className="flex gap-2">
-          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-          </button>
-          <button 
-            onClick={() => handleDeleteUser(info.row.original._id)}
-            className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors text-muted-foreground"
-            title="Delete User"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
-        </div>
-      )
+      cell: info => {
+        const id = info.row.original._id;
+        return (
+          <div className="flex gap-2 items-center relative">
+            <div className="relative">
+              <button 
+                onClick={() => setOpenDropdownId(openDropdownId === id ? null : id)}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <DropdownMenu 
+                isOpen={openDropdownId === id} 
+                onClose={() => setOpenDropdownId(null)}
+                onChangeRole={(role) => updateRoleMutation.mutate({ id, role })}
+              />
+            </div>
+            <button 
+              onClick={() => handleDeleteUser(id)}
+              className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors text-muted-foreground"
+              title="Delete User"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
+        );
+      }
     }
   ];
 
@@ -119,10 +160,35 @@ const UserManagement = () => {
     onError: (err) => toast.error('Error deleting user: ' + (err.response?.data?.message || err.message))
   });
 
+  const createMutation = useMutation({
+    mutationFn: adminService.createUser,
+    onSuccess: () => {
+      toast.success('User created successfully');
+      setIsAddModalOpen(false);
+      setFormData({ name: '', email: '', password: '', role: 'admin' });
+      queryClient.invalidateQueries(['users']);
+    },
+    onError: (err) => toast.error('Error creating user: ' + (err.response?.data?.message || err.message))
+  });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ id, role }) => adminService.updateUserRole(id, role),
+    onSuccess: () => {
+      toast.success('User role updated');
+      queryClient.invalidateQueries(['users']);
+    },
+    onError: (err) => toast.error('Error updating role: ' + (err.response?.data?.message || err.message))
+  });
+
   const handleDeleteUser = (id) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleCreateSubmit = (e) => {
+    e.preventDefault();
+    createMutation.mutate(formData);
   };
 
   const table = useReactTable({
@@ -140,7 +206,10 @@ const UserManagement = () => {
           <h1 className="text-3xl font-black mb-1">User Management</h1>
           <p className="text-muted-foreground">Manage patients, doctors, and system administrators.</p>
         </div>
-        <button className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-semibold shadow-md hover:bg-primary/90 transition-all flex items-center gap-2">
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-semibold shadow-md hover:bg-primary/90 transition-all flex items-center gap-2"
+        >
           <Shield className="w-4 h-4" /> Add Admin
         </button>
       </div>
@@ -251,6 +320,48 @@ const UserManagement = () => {
           </div>
         </div>
       </div>
+
+      {/* Add User Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-2xl font-bold mb-4">Add New User</h2>
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Full Name</label>
+                <input required type="text" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input required type="email" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Password</label>
+                <input required type="password" minLength="6" className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Role</label>
+                <select className="w-full bg-background border rounded-lg px-3 py-2" 
+                  value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}
+                >
+                  <option value="admin">Admin</option>
+                  <option value="patient">Patient</option>
+                </select>
+              </div>
+              
+              <div className="pt-4 flex gap-3 justify-end">
+                <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 border rounded-lg font-medium hover:bg-muted">Cancel</button>
+                <button type="submit" disabled={createMutation.isLoading} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50">
+                  {createMutation.isLoading ? 'Creating...' : 'Create User'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
