@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   flexRender,
   getCoreRowModel,
@@ -7,9 +7,10 @@ import {
 } from '@tanstack/react-table';
 import { 
   MoreHorizontal, Search, Filter, Shield, 
-  User as UserIcon, HeartPulse, Activity, ShieldAlert
+  User as UserIcon, HeartPulse, Activity, ShieldAlert, Trash2
 } from 'lucide-react';
 import adminService from '../../services/adminService';
+import toast from 'react-hot-toast';
 
 const UserManagement = () => {
   const [page, setPage] = useState(1);
@@ -91,13 +92,38 @@ const UserManagement = () => {
     },
     {
       id: 'actions',
-      cell: () => (
-        <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-          <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-        </button>
+      cell: info => (
+        <div className="flex gap-2">
+          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+          </button>
+          <button 
+            onClick={() => handleDeleteUser(info.row.original._id)}
+            className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors text-muted-foreground"
+            title="Delete User"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
       )
     }
   ];
+
+  const queryClient = useQueryClient();
+  const deleteMutation = useMutation({
+    mutationFn: adminService.deleteUser,
+    onSuccess: () => {
+      toast.success('User deleted successfully');
+      queryClient.invalidateQueries(['users']);
+    },
+    onError: (err) => toast.error('Error deleting user: ' + (err.response?.data?.message || err.message))
+  });
+
+  const handleDeleteUser = (id) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   const table = useReactTable({
     data: data?.data || [],

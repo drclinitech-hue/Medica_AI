@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Detection = require('../models/Detection');
 const Appointment = require('../models/Appointment');
+const Doctor = require('../models/Doctor');
 
 // @desc    Get dashboard statistics
 // @route   GET /api/admin/dashboard
@@ -122,7 +123,78 @@ const getUsers = async (req, res) => {
   }
 };
 
+// @desc    Delete User
+// @route   DELETE /api/admin/users/:id
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    // Also cleanup Doctor record if they were a doctor
+    if (user.role === 'doctor') await Doctor.findOneAndDelete({ userId: user._id });
+    res.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all doctors
+// @route   GET /api/admin/doctors
+const getDoctors = async (req, res) => {
+  try {
+    const doctors = await Doctor.find().populate('userId', 'name email role createdAt');
+    res.json({ success: true, data: doctors });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete Doctor
+// @route   DELETE /api/admin/doctors/:id
+const deleteDoctor = async (req, res) => {
+  try {
+    const doctor = await Doctor.findByIdAndDelete(req.params.id);
+    if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+    // Also remove their user account or downgrade them
+    await User.findByIdAndDelete(doctor.userId);
+    res.json({ success: true, message: 'Doctor deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all patients
+// @route   GET /api/admin/patients
+const getPatients = async (req, res) => {
+  try {
+    const patients = await User.find({ role: 'patient' }).select('-password').sort({ createdAt: -1 });
+    // We can aggregate detections per patient if needed, but for now we just return patients
+    res.json({ success: true, data: patients });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all appointments
+// @route   GET /api/admin/appointments
+const getAppointments = async (req, res) => {
+  try {
+    const appointments = await Appointment.find()
+      .populate('patientId', 'name email')
+      .populate('doctorId', 'userId')
+      .populate({ path: 'doctorId', populate: { path: 'userId', select: 'name' } })
+      .sort({ appointmentDate: -1 });
+    res.json({ success: true, data: appointments });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getDashboardStats,
-  getUsers
+  getUsers,
+  deleteUser,
+  getDoctors,
+  deleteDoctor,
+  getPatients,
+  getAppointments
 };

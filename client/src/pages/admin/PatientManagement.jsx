@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   flexRender,
   getCoreRowModel,
@@ -8,16 +9,15 @@ import {
   MoreHorizontal, Search, Filter,
   User as UserIcon
 } from 'lucide-react';
-
-const MOCK_PATIENTS = [
-  { id: 1, name: 'John Doe', email: 'john@example.com', gender: 'Male', age: 34, predictions: 2, joinDate: '2025-02-15' },
-  { id: 2, name: 'Ayesha Khan', email: 'ayesha@example.com', gender: 'Female', age: 28, predictions: 5, joinDate: '2025-01-10' },
-  { id: 3, name: 'Michael Smith', email: 'michael@example.com', gender: 'Male', age: 45, predictions: 0, joinDate: '2025-03-01' },
-];
+import adminService from '../../services/adminService';
 
 const PatientManagement = () => {
-  const [data] = useState(MOCK_PATIENTS);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['patients'],
+    queryFn: adminService.getPatients
+  });
 
   const columns = [
     {
@@ -37,11 +37,13 @@ const PatientManagement = () => {
     },
     {
       accessorKey: 'gender',
-      header: 'Gender'
+      header: 'Gender',
+      cell: info => info.getValue() || 'N/A'
     },
     {
       accessorKey: 'age',
-      header: 'Age'
+      header: 'Age',
+      cell: info => info.getValue() || 'N/A'
     },
     {
       accessorKey: 'predictions',
@@ -51,8 +53,9 @@ const PatientManagement = () => {
       )
     },
     {
-      accessorKey: 'joinDate',
-      header: 'Joined'
+      accessorKey: 'createdAt',
+      header: 'Joined',
+      cell: info => new Date(info.getValue()).toLocaleDateString()
     },
     {
       id: 'actions',
@@ -65,7 +68,7 @@ const PatientManagement = () => {
   ];
 
   const table = useReactTable({
-    data,
+    data: data || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -107,18 +110,29 @@ const PatientManagement = () => {
               ))}
             </thead>
             <tbody>
-              {table.getRowModel().rows.map(row => (
-                <tr key={row.id} className="border-b hover:bg-muted/30 transition-colors">
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="px-6 py-4">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              {table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map(row => (
+                  <tr key={row.id} className="border-b hover:bg-muted/30 transition-colors">
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="px-6 py-4">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                !isLoading && (
+                  <tr>
+                    <td colSpan={columns.length} className="px-6 py-12 text-center text-muted-foreground">
+                      No patients found.
                     </td>
-                  ))}
-                </tr>
-              ))}
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
         </div>
+        {isLoading && <div className="p-4 text-center text-muted-foreground">Loading...</div>}
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   flexRender,
   getCoreRowModel,
@@ -6,48 +7,62 @@ import {
 } from '@tanstack/react-table';
 import { 
   MoreHorizontal, Search, Filter, CheckCircle, 
-  XCircle, Stethoscope, AlertTriangle, UserPlus
+  XCircle, Stethoscope, AlertTriangle, UserPlus, Trash2
 } from 'lucide-react';
-
-const MOCK_DOCTORS = [
-  { id: 1, name: 'Dr. Sarah Ahmed', email: 'sarah@medica.ai', specializations: ['Cardiology'], pmdc: '12345-A', status: 'Verified', joinDate: '2025-01-15' },
-  { id: 2, name: 'Dr. Ali Khan', email: 'ali@medica.ai', specializations: ['Neurology', 'General'], pmdc: '67890-S', status: 'Pending', joinDate: '2025-02-10' },
-  { id: 3, name: 'Dr. Fatima Tariq', email: 'fatima@medica.ai', specializations: ['Pediatrics'], pmdc: '11223-P', status: 'Suspended', joinDate: '2024-11-20' },
-];
+import adminService from '../../services/adminService';
+import toast from 'react-hot-toast';
 
 const DoctorManagement = () => {
-  const [data] = useState(MOCK_DOCTORS);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ['doctors'],
+    queryFn: adminService.getDoctors
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: adminService.deleteDoctor,
+    onSuccess: () => {
+      toast.success('Doctor deleted successfully');
+      queryClient.invalidateQueries(['doctors']);
+    },
+    onError: (err) => toast.error('Error deleting doctor: ' + (err.response?.data?.message || err.message))
+  });
+
+  const handleDeleteDoctor = (id) => {
+    if (window.confirm('Are you sure you want to delete this doctor?')) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   const columns = [
-    {
-      accessorKey: 'name',
+      accessorKey: 'userId',
       header: 'Doctor',
-      cell: info => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold">
-            <Stethoscope className="w-5 h-5" />
+      cell: info => {
+        const user = info.getValue() || {};
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold">
+              <Stethoscope className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-semibold">{user.name || 'Unknown'}</p>
+              <p className="text-xs text-muted-foreground">{user.email || 'N/A'}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold">{info.row.original.name}</p>
-            <p className="text-xs text-muted-foreground">{info.row.original.email}</p>
-          </div>
-        </div>
-      )
+        )
+      }
     },
     {
-      accessorKey: 'pmdc',
+      accessorKey: 'pmdcNumber',
       header: 'PMDC No.'
     },
     {
-      accessorKey: 'specializations',
+      accessorKey: 'specialization',
       header: 'Specializations',
       cell: info => (
-        <div className="flex gap-1 flex-wrap">
-          {info.getValue().map(spec => (
-            <span key={spec} className="px-2 py-1 bg-muted rounded-md text-xs">{spec}</span>
-          ))}
-        </div>
+        <span className="px-2 py-1 bg-muted rounded-md text-xs">{info.getValue()}</span>
       )
     },
     {
@@ -70,21 +85,31 @@ const DoctorManagement = () => {
       }
     },
     {
-      accessorKey: 'joinDate',
-      header: 'Joined'
+      accessorKey: 'createdAt',
+      header: 'Joined',
+      cell: info => new Date(info.getValue()).toLocaleDateString()
     },
     {
       id: 'actions',
-      cell: () => (
-        <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-          <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-        </button>
+      cell: info => (
+        <div className="flex gap-2">
+          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+          </button>
+          <button 
+            onClick={() => handleDeleteDoctor(info.row.original._id)}
+            className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors text-muted-foreground"
+            title="Delete Doctor"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
       )
     }
   ];
 
   const table = useReactTable({
-    data,
+    data: data || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -135,18 +160,29 @@ const DoctorManagement = () => {
               ))}
             </thead>
             <tbody>
-              {table.getRowModel().rows.map(row => (
-                <tr key={row.id} className="border-b hover:bg-muted/30 transition-colors">
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="px-6 py-4">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              {table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map(row => (
+                  <tr key={row.id} className="border-b hover:bg-muted/30 transition-colors">
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="px-6 py-4">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                !isLoading && (
+                  <tr>
+                    <td colSpan={columns.length} className="px-6 py-12 text-center text-muted-foreground">
+                      No doctors found.
                     </td>
-                  ))}
-                </tr>
-              ))}
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
         </div>
+        {isLoading && <div className="p-4 text-center text-muted-foreground">Loading...</div>}
       </div>
     </div>
   );
