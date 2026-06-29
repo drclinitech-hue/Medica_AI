@@ -17,7 +17,7 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/medica_ai')
 const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const getRandomNum = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-const generateDoctors = async (count = 200) => {
+const generateDoctors = async (count = 30) => {
   try {
     console.log(`Starting to seed ${count} doctors...`);
     
@@ -54,7 +54,7 @@ const generateDoctors = async (count = 200) => {
         pmdcNumber: `PMDC-${getRandomNum(10000, 99999)}-${i}-${getRandom(['P', 'S', 'B'])}`,
         specialization: spec,
         experience: getRandomNum(2, 30),
-        consultationFee: getRandomNum(1000, 5000), // PKR 1000 to 5000
+        consultationFee: getRandom([1000, 1500, 2000, 2500, 3000, 3500, 4000, 5000]), // Round figures
         bio: `I am a highly experienced ${spec} practicing in ${city}. I specialize in diagnosing and treating complex cases and providing compassionate care.`,
         education: [{
           degree: 'MBBS',
@@ -94,4 +94,4 @@ const generateDoctors = async (count = 200) => {
   }
 };
 
-generateDoctors(200);
+generateDoctors(30);

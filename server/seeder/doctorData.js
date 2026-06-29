@@ -10,16 +10,13 @@ const specializations = [
 ];
 
 const cities = [
-  'Islamabad', 'Rawalpindi', 'Lahore', 'Karachi', 'Faisalabad', 'Multan', 
-  'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala', 'Hyderabad', 'Bahawalpur', 
-  'Sargodha', 'Abbottabad', 'Mardan'
+  'Sahiwal'
 ];
 
 const hospitals = [
-  'Aga Khan University Hospital', 'Shaukat Khanum Memorial Cancer Hospital', 
-  'Pakistan Institute of Medical Sciences (PIMS)', 'Mayo Hospital', 
-  'Jinnah Hospital', 'Liaquat National Hospital', 'CMH', 
-  'Holy Family Hospital', 'Services Hospital', 'Indus Hospital'
+  'DHQ Hospital Sahiwal', 'Sahiwal Medical College Hospital', 
+  'Fazal Hospital', 'Christian Hospital Sahiwal', 
+  'Life Care Hospital', 'Al-Shifa Hospital Sahiwal'
 ];
 
 const universities = [
