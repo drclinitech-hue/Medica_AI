@@ -48,8 +48,15 @@ const DetectionWizard = () => {
   });
   const [allergyInput, setAllergyInput] = useState('');
 
-  // Phase 3: Description
-  const [description, setDescription] = useState('');
+  // Phase 3: Diagnostic Interview
+  const [chatHistory, setChatHistory] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const chatEndRef = React.useRef(null);
+  
+  // Auto-scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatHistory]);
 
   // Phase 4: AI Analysis
   const [extractedData, setExtractedData] = useState({ symptoms: [], duration: '', severity: '' });
@@ -85,21 +92,29 @@ const DetectionWizard = () => {
   };
 
   const handlePhase3Submit = async () => {
-    if (!description || description.length < 10) {
-      toast.error('Please describe your problem in more detail');
-      return;
-    }
+    if (!chatInput.trim()) return;
+    
+    const newUserMsg = { sender: 'user', text: chatInput };
+    const updatedHistory = [...chatHistory, newUserMsg];
+    
+    setChatHistory(updatedHistory);
+    setChatInput('');
     setLoading(true);
+    
     try {
-      const res = await detectionService.analyzeDescription(description);
+      const res = await detectionService.analyzeDescription(updatedHistory);
+      
       if (res.data?.type === 'complete') {
         setExtractedData(res.data.data);
+        toast.success('Diagnostic interview complete!');
         nextPhase();
       } else {
-        toast.error('AI needs more info: ' + (res.data?.text || ''));
+        // AI returned a follow-up question
+        setChatHistory([...updatedHistory, { sender: 'ai', text: res.data?.text || 'Could you provide more details?' }]);
       }
     } catch (err) {
-      toast.error('AI Analysis failed.');
+      toast.error('AI Interview failed.');
+      setChatHistory(updatedHistory); // keep user message
     } finally {
       setLoading(false);
     }
@@ -240,21 +255,59 @@ const DetectionWizard = () => {
 
   const renderPhase3 = () => (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <h2 className="text-2xl font-bold">Describe Your Health Problem</h2>
-      <p className="text-muted-foreground">Please describe your symptoms naturally. Our AI will analyze them.</p>
+      <h2 className="text-2xl font-bold">Diagnostic Interview</h2>
+      <p className="text-muted-foreground">Describe your symptoms to our AI doctor. It will ask follow-up questions to understand your exact condition.</p>
       
-      <textarea 
-        className="w-full p-4 bg-muted border border-border/50 rounded-2xl min-h-[200px] resize-none focus:ring-2 focus:ring-primary/50 text-lg outline-none"
-        placeholder="Example: I have had a fever for 3 days with severe headache, body pain, vomiting, and loss of appetite."
-        value={description}
-        onChange={e => setDescription(e.target.value)}
-      ></textarea>
+      <div className="bg-card border rounded-2xl p-4 h-[400px] flex flex-col shadow-inner overflow-hidden relative">
+        {chatHistory.length === 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground z-0 opacity-50">
+            <Activity className="w-12 h-12 mb-4" />
+            <p>Start by describing your main health problem...</p>
+          </div>
+        )}
+        
+        <div className="flex-1 overflow-y-auto space-y-4 mb-4 z-10 pr-2 hide-scrollbar">
+          {chatHistory.map((msg, i) => (
+            <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[80%] rounded-2xl p-3 ${msg.sender === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted rounded-tl-sm border'}`}>
+                {msg.text}
+              </div>
+            </div>
+          ))}
+          {loading && (
+             <div className="flex justify-start">
+               <div className="bg-muted rounded-2xl rounded-tl-sm p-4 flex gap-1 items-center border">
+                 <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                 <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                 <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+               </div>
+             </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        <div className="flex gap-2 z-10">
+          <input 
+            type="text" 
+            className="flex-1 p-3 bg-muted border border-border/50 rounded-xl focus:ring-2 focus:ring-primary/50 text-sm outline-none"
+            placeholder="Type your symptoms here..."
+            value={chatInput}
+            onChange={e => setChatInput(e.target.value)}
+            onKeyPress={e => e.key === 'Enter' && handlePhase3Submit()}
+            disabled={loading}
+          />
+          <button 
+            onClick={handlePhase3Submit} 
+            disabled={loading || !chatInput.trim()} 
+            className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold hover:bg-primary/90 flex items-center gap-2 disabled:opacity-50 transition-colors"
+          >
+            Send <ChevronRight className="w-4 h-4"/>
+          </button>
+        </div>
+      </div>
 
       <div className="flex justify-between pt-4">
         <button onClick={prevPhase} className="bg-muted text-foreground px-6 py-2.5 rounded-xl font-bold hover:bg-muted/80 flex items-center gap-2"><ChevronLeft className="w-4 h-4"/> Back</button>
-        <button onClick={handlePhase3Submit} disabled={loading} className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold hover:bg-primary/90 flex items-center gap-2 disabled:opacity-50">
-          {loading ? 'Analyzing with AI...' : 'Analyze Symptoms'} <Activity className="w-4 h-4"/>
-        </button>
       </div>
     </div>
   );
@@ -288,7 +341,7 @@ const DetectionWizard = () => {
       </div>
 
       <div className="flex justify-between pt-4">
-        <button onClick={prevPhase} className="bg-muted text-foreground px-6 py-2.5 rounded-xl font-bold hover:bg-muted/80 flex items-center gap-2"><ChevronLeft className="w-4 h-4"/> Edit Description</button>
+        <button onClick={prevPhase} className="bg-muted text-foreground px-6 py-2.5 rounded-xl font-bold hover:bg-muted/80 flex items-center gap-2"><ChevronLeft className="w-4 h-4"/> Re-do Interview</button>
         <button onClick={handlePhase4Submit} disabled={loading} className="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50">
           {loading ? 'Running ML Models...' : 'Run Disease Detection'} <FileSearch className="w-5 h-5"/>
         </button>

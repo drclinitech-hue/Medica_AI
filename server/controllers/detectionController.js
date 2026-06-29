@@ -27,12 +27,11 @@ const startDetection = async (req, res) => {
 // @access  Private
 const analyzeDescription = async (req, res) => {
   try {
-    const { description } = req.body;
-    if (!description) return res.status(400).json({ message: 'Description is required' });
+    const { history } = req.body;
+    if (!history || !Array.isArray(history) || history.length === 0) {
+      return res.status(400).json({ message: 'Chat history is required' });
+    }
 
-    // We can reuse groqService analyzeSymptoms by formatting the prompt slightly differently
-    // Actually, groqService expects a chat history. We can just send a single user message.
-    const history = [{ sender: 'user', text: description }];
     const aiResponse = await groqService.analyzeSymptoms(history);
 
     res.json({ success: true, data: aiResponse });

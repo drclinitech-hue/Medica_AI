@@ -17,8 +17,8 @@ const startDetection = async (demographics, medicalHistory) => {
   return response.data;
 };
 
-const analyzeDescription = async (description) => {
-  const response = await axios.post(`${API_URL}/detection/analyze`, { description }, {
+const analyzeDescription = async (history) => {
+  const response = await axios.post(`${API_URL}/detection/analyze`, { history }, {
     headers: getAuthHeaders(),
   });
   return response.data;
