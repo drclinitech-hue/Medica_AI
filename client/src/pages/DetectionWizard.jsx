@@ -34,10 +34,12 @@ const DetectionWizard = () => {
   // Calculate BMI auto
   useEffect(() => {
     if (demographics.height && demographics.weight) {
-      const h = parseFloat(demographics.height) / 100;
+      // height is in feet, weight is in kg
+      // 1 foot = 0.3048 meters
+      const h_meters = parseFloat(demographics.height) * 0.3048;
       const w = parseFloat(demographics.weight);
-      if (h > 0 && w > 0) {
-        setDemographics(prev => ({ ...prev, bmi: (w / (h * h)).toFixed(1) }));
+      if (h_meters > 0 && w > 0) {
+        setDemographics(prev => ({ ...prev, bmi: (w / (h_meters * h_meters)).toFixed(1) }));
       }
     }
   }, [demographics.height, demographics.weight]);
@@ -187,7 +189,7 @@ const DetectionWizard = () => {
             <option value="">Select...</option><option>Male</option><option>Female</option><option>Other</option>
           </select>
         </div>
-        <div><label className="block text-sm font-bold mb-1">Height (cm)</label><input type="number" className="w-full p-3 bg-muted rounded-xl" value={demographics.height} onChange={e => setDemographics({...demographics, height: e.target.value})} /></div>
+        <div><label className="block text-sm font-bold mb-1">Height (ft)</label><input type="number" step="0.1" className="w-full p-3 bg-muted rounded-xl" value={demographics.height} onChange={e => setDemographics({...demographics, height: e.target.value})} placeholder="e.g. 5.8" /></div>
         <div><label className="block text-sm font-bold mb-1">Weight (kg)</label><input type="number" className="w-full p-3 bg-muted rounded-xl" value={demographics.weight} onChange={e => setDemographics({...demographics, weight: e.target.value})} /></div>
         <div><label className="block text-sm font-bold mb-1">BMI (Auto)</label><input type="text" readOnly className="w-full p-3 bg-primary/10 text-primary font-bold rounded-xl" value={demographics.bmi} /></div>
         <div>
