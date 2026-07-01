@@ -40,7 +40,7 @@ const PrescriptionPad = ({ appointment }) => {
         </div>
         <div className="text-right">
           <p><span className="font-bold">Gender:</span> {user?.gender || 'N/A'} &nbsp;&nbsp; <span className="font-bold">Age:</span> {user?.age || 'N/A'}</p>
-          <p><span className="font-bold">Height:</span> {user?.height ? `${user.height} cm` : 'N/A'} &nbsp;&nbsp; <span className="font-bold">Weight:</span> {user?.weight ? `${user.weight} kg` : 'N/A'}</p>
+          <p><span className="font-bold">Height:</span> {user?.height ? `${user.height} ${user.height < 10 ? 'ft' : 'cm'}` : 'N/A'} &nbsp;&nbsp; <span className="font-bold">Weight:</span> {user?.weight ? `${user.weight} kg` : 'N/A'}</p>
         </div>
       </div>
 
