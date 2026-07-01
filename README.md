@@ -116,6 +116,18 @@ To run the entire stack locally, you will need three separate terminal windows r
 2. One for the **Server** (`npm run dev` in `/server`)
 3. One for the **ML Service** (`python app.py` in `/ml-model`)
 
+### 🌐 Network Access (LAN / Wi-Fi)
+The application is pre-configured to bind to all network interfaces (`0.0.0.0` and `--host`). You can access it not only on your local machine, but also from smartphones, tablets, or other computers connected to the same Wi-Fi / Local Area Network!
+* **Local Machine**: Open `http://localhost:5173`
+* **Network Devices**: Open `http://<YOUR_COMPUTER_LAN_IP>:5173` (e.g., `http://192.168.1.15:5173`). The frontend will dynamically route API requests to your host computer!
+
+---
+
+## 📑 Project Report & Appendix
+For academic submissions or technical project documentation, refer to:
+* **[PROJECT_SPECIFICATION.md](PROJECT_SPECIFICATION.md)** - Full architectural specification and features.
+* **[APPENDIX_SOURCE_CODE.md](APPENDIX_SOURCE_CODE.md)** - Curated core source code snippets (ML inference, Generative AI triage, schemas, and UI) ready for project report inclusion.
+
 ## 📝 License
 
 ISC License
