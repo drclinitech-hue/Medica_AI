@@ -35,7 +35,7 @@ function App() {
           <Routes>
             {/* Admin Routes (No Navbar/Footer) */}
             <Route path="/admin" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'superadmin', 'moderator']}>
                 <AdminLayout />
               </ProtectedRoute>
             }>
@@ -52,7 +52,7 @@ function App() {
 
             {/* Doctor Routes (No Navbar/Footer) */}
             <Route path="/doctor" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['doctor']}>
                 <DoctorLayout />
               </ProtectedRoute>
             }>

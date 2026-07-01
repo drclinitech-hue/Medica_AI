@@ -23,6 +23,7 @@ api.interceptors.request.use(
 
 // Register user
 const register = async (userData) => {
+  localStorage.removeItem('user');
   const response = await api.post('/auth/register', userData);
   if (response.data) {
     localStorage.setItem('user', JSON.stringify(response.data));
@@ -32,6 +33,7 @@ const register = async (userData) => {
 
 // Login user
 const login = async (userData) => {
+  localStorage.removeItem('user');
   const response = await api.post('/auth/login', userData);
   if (response.data) {
     localStorage.setItem('user', JSON.stringify(response.data));

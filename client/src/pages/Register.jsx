@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,9 +15,23 @@ const registerSchema = z.object({
 });
 
 const Register = () => {
-  const { register: registerUser } = useContext(AuthContext);
+  const { register: registerUser, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      if (['admin', 'superadmin', 'moderator'].includes(user.role)) {
+        navigate('/admin');
+      } else if (user.role === 'doctor') {
+        navigate('/doctor-dashboard');
+      } else if (user.role === 'patient') {
+        navigate('/');
+      } else {
+        navigate('/profile');
+      }
+    }
+  }, [user, navigate]);
 
   const {
     register,
