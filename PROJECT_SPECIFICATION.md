@@ -1,7 +1,7 @@
-# MEDICA AI - Project Specification & Documentation
+# MEDICHECK AI - Project Specification & Documentation
 
 ## 1. Project Overview
-**Medica AI** is an advanced, AI-driven healthcare platform designed to bridge the gap between patients, medical AI diagnostics, and healthcare professionals. The system provides users with preliminary disease detection based on symptoms and vitals, connects them with relevant doctors, and offers a comprehensive management dashboard for administrators and medical staff.
+**MediCheck AI** is an advanced, AI-driven healthcare platform designed to bridge the gap between patients, medical AI diagnostics, and healthcare professionals. The system provides users with preliminary disease detection based on symptoms and vitals, connects them with relevant doctors, and offers a comprehensive management dashboard for administrators and medical staff.
 
 ---
 

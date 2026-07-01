@@ -30,6 +30,8 @@ const Login = () => {
     if (result) {
       if (['admin', 'superadmin', 'moderator'].includes(result.role)) {
         navigate('/admin');
+      } else if (result.role === 'doctor') {
+        navigate('/doctor-dashboard');
       } else if (result.role === 'patient') {
         navigate('/');
       } else {

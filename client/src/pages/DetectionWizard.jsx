@@ -430,7 +430,7 @@ const DetectionWizard = () => {
               <p className="text-primary text-sm font-bold mb-1">{doctor.specialization}</p>
               <p className="text-xs text-muted-foreground">{doctor.hospitals[0]?.name}, {doctor.hospitals[0]?.city}</p>
             </div>
-            <Link to={`/doctors/${doctor._id}`} className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg font-bold text-sm w-full sm:w-auto text-center">Book Now</Link>
+            <Link to={`/doctors/${doctor._id}?detectionId=${detectionId}&disease=${encodeURIComponent(mlResults?.details?.predicted_disease)}`} className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg font-bold text-sm w-full sm:w-auto text-center">Book Now</Link>
           </div>
         ))}
         {recommendedDoctors.length === 0 && <p className="text-center p-6 border border-dashed rounded-xl">No specific doctors found. <Link to="/doctors" className="text-primary underline">Browse directory</Link></p>}
@@ -452,7 +452,7 @@ const DetectionWizard = () => {
       
       <div id="printable-report" className="bg-white text-black p-8 rounded-2xl border shadow-sm">
         <div className="border-b-2 border-primary pb-4 mb-6 text-center">
-          <h1 className="text-3xl font-black text-primary">MEDICA AI</h1>
+          <h1 className="text-3xl font-black text-primary">MEDICHECK AI</h1>
           <p className="text-sm font-bold text-gray-500 tracking-widest uppercase mt-1">Automated Disease Detection Report</p>
         </div>
 

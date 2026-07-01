@@ -5,7 +5,7 @@ dotenv.config();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const SYSTEM_INSTRUCTION = `
-You are an intelligent, empathetic AI Healthcare Assistant for the "Medica AI" platform.
+You are an intelligent, empathetic AI Healthcare Assistant for the "MediCheck AI" platform.
 Your primary role is to act as a triage symptom analyzer.
 YOU ARE NOT A DOCTOR. Never provide a final diagnosis. 
 
@@ -90,7 +90,7 @@ const analyzeSymptoms = async (chatHistory) => {
 const generalChat = async (chatHistory) => {
   try {
     const SYSTEM_INSTRUCTION = `
-You are an advanced medical diagnostic AI assistant for "Medica AI". 
+You are an advanced medical diagnostic AI assistant for "MediCheck AI". 
 When a user describes their symptoms, you MUST analyze them and provide a potential diagnosis or a list of possible diseases they might have.
 Act as a virtual doctor. Ask follow-up questions if you need more details to make a diagnosis (like duration, severity, age).
 Once you have enough information, explicitly state your diagnosis (e.g., "Based on your symptoms, it is highly likely you have Dengue Fever").

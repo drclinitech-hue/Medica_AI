@@ -139,7 +139,7 @@ const AdminDashboard = () => {
     <div className="space-y-8 pb-12">
       <div>
         <h1 className="text-3xl font-black mb-2">Dashboard Overview</h1>
-        <p className="text-muted-foreground">Welcome to the Medica AI Enterprise Admin Panel.</p>
+        <p className="text-muted-foreground">Welcome to the MediCheck AI Enterprise Admin Panel.</p>
       </div>
 
       {/* Stats Grid */}

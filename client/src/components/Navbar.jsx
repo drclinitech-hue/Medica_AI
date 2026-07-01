@@ -29,12 +29,12 @@ const Navbar = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${scrolled ? 'bg-background/80 backdrop-blur-md shadow-sm' : 'bg-transparent border-transparent'}`}>
+    <nav className={`print:hidden fixed top-0 w-full z-50 transition-all duration-300 border-b ${scrolled ? 'bg-background/80 backdrop-blur-md shadow-sm' : 'bg-transparent border-transparent'}`}>
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Activity className="h-6 w-6 text-primary" />
           <Link to="/" className="text-xl font-bold tracking-tight text-foreground">
-            Medica AI
+            MediCheck AI
           </Link>
         </div>
         
@@ -74,8 +74,8 @@ const Navbar = () => {
                   </div>
                   
                   {user.role === 'doctor' && (
-                    <Link to="/doctor-dashboard" className="block px-4 py-2 text-sm hover:bg-muted" onClick={() => setDropdownOpen(false)}>
-                      Doctor Dashboard
+                    <Link to="/doctor" className="block px-4 py-2 text-sm hover:bg-muted" onClick={() => setDropdownOpen(false)}>
+                      Doctor Portal
                     </Link>
                   )}
                   {user.role === 'patient' && (

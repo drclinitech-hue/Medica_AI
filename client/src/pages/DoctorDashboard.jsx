@@ -47,7 +47,7 @@ const DoctorDashboard = () => {
   const todayCount = appointments.filter(a => a.status === 'Confirmed' && new Date(a.date).toDateString() === new Date().toDateString()).length;
 
   return (
-    <div className="container py-10 max-w-6xl mx-auto flex flex-col md:flex-row gap-8 mt-4">
+    <div className="flex flex-col md:flex-row gap-8">
       
       {/* Sidebar */}
       <aside className="w-full md:w-1/3 lg:w-1/4 space-y-6">

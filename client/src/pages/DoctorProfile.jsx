@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import doctorService from '../services/doctorService';
 import appointmentService from '../services/appointmentService';
 import toast from 'react-hot-toast';
@@ -15,10 +15,15 @@ const DoctorProfile = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const diseaseParam = queryParams.get('disease');
+  const detectionIdParam = queryParams.get('detectionId');
+
   // Booking State
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
-  const [reason, setReason] = useState('');
+  const [reason, setReason] = useState(diseaseParam ? `AI Detection referred me for: ${diseaseParam}\n(Detection ID: ${detectionIdParam})` : '');
   const [consultType, setConsultType] = useState('Online');
   const [booking, setBooking] = useState(false);
 
@@ -154,16 +159,9 @@ const DoctorProfile = () => {
                   className="w-full p-2.5 bg-muted rounded-lg"
                   value={consultType}
                   onChange={(e) => setConsultType(e.target.value)}
-                  disabled={doctor.consultationType !== 'Both'}
                 >
-                  {doctor.consultationType === 'Both' ? (
-                    <>
-                      <option value="Online">Online Video</option>
-                      <option value="Physical">Physical Clinic</option>
-                    </>
-                  ) : (
-                    <option value={doctor.consultationType}>{doctor.consultationType}</option>
-                  )}
+                  <option value="Online">Online Video</option>
+                  <option value="Physical">Physical Clinic</option>
                 </select>
               </div>
 

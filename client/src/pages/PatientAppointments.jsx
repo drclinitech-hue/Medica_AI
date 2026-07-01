@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import appointmentService from '../services/appointmentService';
-import { Calendar, Clock, MapPin, Video, Info } from 'lucide-react';
+import { Calendar, Clock, MapPin, Video, Info, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
+import PrescriptionPad from '../components/PrescriptionPad';
 
 const PatientAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [printingAppointment, setPrintingAppointment] = useState(null);
 
   useEffect(() => {
     fetchAppointments();
@@ -33,7 +35,8 @@ const PatientAppointments = () => {
   };
 
   return (
-    <div className="container py-10 max-w-5xl mx-auto">
+    <>
+    <div className="container py-10 max-w-5xl mx-auto print:hidden">
       <h1 className="text-3xl font-bold mb-8">My Appointments</h1>
 
       {loading ? (
@@ -73,8 +76,19 @@ const PatientAppointments = () => {
               </div>
 
               {appt.status === 'Confirmed' && appt.consultationType === 'Online' && (
-                <button className="w-full md:w-auto bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors">
-                  Join Video Call
+                <button className="w-full md:w-auto bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+                  <Video className="w-4 h-4" /> Join Video Call
+                </button>
+              )}
+              {appt.status === 'Confirmed' && appt.consultationType === 'Physical' && (
+                <button 
+                  onClick={() => {
+                    setPrintingAppointment(appt);
+                    setTimeout(() => window.print(), 100);
+                  }}
+                  className="w-full md:w-auto bg-secondary text-secondary-foreground px-6 py-2 rounded-lg font-medium hover:bg-secondary/90 transition-colors flex items-center justify-center gap-2 print:hidden"
+                >
+                  <Printer className="w-4 h-4" /> Print Prescription Pad
                 </button>
               )}
             </div>
@@ -82,6 +96,12 @@ const PatientAppointments = () => {
         </div>
       )}
     </div>
+
+      {/* Hidden print component */}
+      <div className="hidden print:block absolute inset-0 bg-white z-50">
+        {printingAppointment && <PrescriptionPad appointment={printingAppointment} />}
+      </div>
+    </>
   );
 };
 

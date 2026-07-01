@@ -22,7 +22,7 @@ const CTA = () => {
           
           <h2 className="text-4xl md:text-5xl font-extrabold mb-6 relative z-10">Ready to take control of your health?</h2>
           <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto relative z-10">
-            Join thousands of users who trust Medica AI for early symptom detection and intelligent healthcare insights.
+            Join thousands of users who trust MediCheck AI for early symptom detection and intelligent healthcare insights.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative z-10">

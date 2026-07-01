@@ -1,6 +1,6 @@
-# MEDICA AI
+# MEDICHECK AI
 
-MEDICA AI is a comprehensive AI-powered healthcare web application designed to integrate advanced machine learning models and generative AI into medical workflows. 
+MEDICHECK AI is a comprehensive AI-powered healthcare web application designed to integrate advanced machine learning models and generative AI into medical workflows. 
 
 The system consists of three main components: a modern React frontend, an Express.js backend server, and a Python-based machine learning service.
 

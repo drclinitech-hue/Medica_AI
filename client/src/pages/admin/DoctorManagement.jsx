@@ -199,7 +199,7 @@ const DoctorManagement = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black mb-1">Doctor Management</h1>
-          <p className="text-muted-foreground">Verify and manage medical professionals on Medica AI.</p>
+          <p className="text-muted-foreground">Verify and manage medical professionals on MediCheck AI.</p>
         </div>
         <button 
           onClick={() => setIsAddModalOpen(true)}

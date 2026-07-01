@@ -9,7 +9,7 @@ const FloatingChatbot = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { sender: 'bot', text: 'Hi! I am Medica AI, your healthcare assistant. How can I help you today?' }
+    { sender: 'bot', text: 'Hi! I am MediCheck AI, your healthcare assistant. How can I help you today?' }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -62,7 +62,7 @@ const FloatingChatbot = () => {
                 <Bot className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-sm">Medica AI Assistant</h3>
+                <h3 className="font-bold text-sm">MediCheck AI Assistant</h3>
                 <p className="text-[10px] opacity-80 uppercase tracking-widest font-semibold">Online</p>
               </div>
             </div>

@@ -35,9 +35,10 @@ const bookAppointment = async (req, res) => {
 const getPatientAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find({ patientId: req.user._id })
+      .populate('patientId', 'name email gender age height weight bloodGroup')
       .populate({
         path: 'doctorId',
-        populate: { path: 'userId', select: 'name' }
+        populate: { path: 'userId', select: 'name email' }
       })
       .sort({ date: -1 });
     
@@ -59,7 +60,11 @@ const getDoctorAppointments = async (req, res) => {
     }
 
     const appointments = await Appointment.find({ doctorId: doctor._id })
-      .populate('patientId', 'name email')
+      .populate('patientId', 'name email gender age height weight bloodGroup')
+      .populate({
+        path: 'doctorId',
+        populate: { path: 'userId', select: 'name email' }
+      })
       .sort({ date: -1 });
     
     res.status(200).json(appointments);

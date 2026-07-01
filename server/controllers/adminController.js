@@ -201,7 +201,7 @@ const createDoctor = async (req, res) => {
       specialization: specialization || 'General',
       fee: fee || 1000,
       status: 'Verified',
-      hospitals: [{ name: 'Medica Hospital', city: city || 'Sahiwal' }]
+      hospitals: [{ name: 'MediCheck Hospital', city: city || 'Sahiwal' }]
     });
 
     res.status(201).json({ success: true, data: doctor });

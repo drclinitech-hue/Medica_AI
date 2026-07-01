@@ -10,7 +10,7 @@ const Footer = () => {
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <Activity className="h-6 w-6 text-primary" />
-              <span className="font-bold text-xl tracking-tight">Medica AI</span>
+              <span className="font-bold text-xl tracking-tight">MediCheck AI</span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed mb-6">
               Empowering individuals with AI-driven healthcare insights, symptom analysis, and early disease detection.
@@ -53,7 +53,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Medica AI. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} MediCheck AI. All rights reserved.</p>
           <p>
             Designed for the future of Healthcare.
           </p>

@@ -1,4 +1,5 @@
 const Detection = require('../models/Detection');
+const User = require('../models/User');
 const groqService = require('../services/groqService');
 const axios = require('axios');
 
@@ -9,6 +10,15 @@ const startDetection = async (req, res) => {
   try {
     const { demographics, medicalHistory } = req.body;
     
+    // Update user profile with demographics
+    await User.findByIdAndUpdate(req.user._id, {
+      age: demographics.age,
+      gender: demographics.gender,
+      height: demographics.height,
+      weight: demographics.weight,
+      bloodGroup: demographics.bloodGroup
+    });
+
     // Create a draft detection
     const detection = await Detection.create({
       patientId: req.user._id,

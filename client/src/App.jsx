@@ -24,6 +24,7 @@ import DiseaseManagement from './pages/admin/DiseaseManagement';
 import MLModelManagement from './pages/admin/MLModelManagement';
 import ReportManagement from './pages/admin/ReportManagement';
 import SystemSettings from './pages/admin/SystemSettings';
+import DoctorLayout from './layouts/doctor/DoctorLayout';
 import Placeholder from './pages/admin/Placeholder';
 
 function App() {
@@ -46,8 +47,19 @@ function App() {
               <Route path="ml-model" element={<MLModelManagement />} />
               <Route path="reports" element={<ReportManagement />} />
               <Route path="settings" element={<SystemSettings />} />
-              
-              {/* Catch-all for unknown admin paths */}
+              <Route path="*" element={<Placeholder title="Unknown" />} />
+            </Route>
+
+            {/* Doctor Routes (No Navbar/Footer) */}
+            <Route path="/doctor" element={
+              <ProtectedRoute>
+                <DoctorLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<DoctorDashboard />} />
+              <Route path="appointments" element={<Placeholder title="Doctor Appointments" />} />
+              <Route path="profile" element={<Placeholder title="Doctor Profile" />} />
+              <Route path="settings" element={<Placeholder title="Doctor Settings" />} />
               <Route path="*" element={<Placeholder title="Unknown" />} />
             </Route>
 
@@ -80,11 +92,6 @@ function App() {
                     <Route path="/appointments" element={
                       <ProtectedRoute>
                         <PatientAppointments />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/doctor-dashboard" element={
-                      <ProtectedRoute>
-                        <DoctorDashboard />
                       </ProtectedRoute>
                     } />
                     {/* Redirect unknown routes to guest landing page */}

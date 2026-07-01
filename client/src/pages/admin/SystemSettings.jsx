@@ -19,11 +19,11 @@ const SystemSettings = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-semibold">Website Name</label>
-              <input type="text" defaultValue="Medica AI" className="w-full bg-muted border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" />
+              <input type="text" defaultValue="MediCheck AI" className="w-full bg-muted border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">Support Email</label>
-              <input type="email" defaultValue="support@medica.ai" className="w-full bg-muted border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" />
+              <input type="email" defaultValue="support@medicheck.ai" className="w-full bg-muted border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold flex justify-between">
